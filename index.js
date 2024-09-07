@@ -3,6 +3,7 @@ import "dotenv/config";
 import { mkConfig, generateCsv, asString } from "export-to-csv";
 import { writeFile } from "node:fs";
 import { Buffer } from "node:buffer";
+import { format } from "date-fns";
 
 const args = process.argv.slice(2);
 console.log(args);
@@ -32,7 +33,7 @@ async function fetchWeather(location) {
       const condition = day.condition.text;
 
       csvData.push({
-        date,
+        date: format(new Date(date), "dd/MM/yyyy"),
         météo: condition,
         "température moyenne": averageTemp,
       });
