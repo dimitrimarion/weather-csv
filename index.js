@@ -6,7 +6,6 @@ import { Buffer } from "node:buffer";
 import { format } from "date-fns";
 
 const args = process.argv.slice(2);
-console.log(args);
 
 async function fetchWeather(location) {
   try {
@@ -37,22 +36,20 @@ async function fetchWeather(location) {
         météo: condition,
         "température moyenne": averageTemp,
       });
-      console.log(`${date}, ${condition}, ${averageTemp}`);
     });
-    return csvData;
+    return { csvData, location };
   } catch (e) {
     const { code } = e;
-    console.log(code);
-    console.log(`Wheater forecast for '${location}' not found`);
+    throw new Error(`Failed to fetch weather data for '${location}': ${code}`);
   }
 }
 
-function generateForecastCSV(data) {
+function generateForecastCSV(data, location) {
   // mkConfig merges your options with the defaults
   // and returns WithDefaults<ConfigOptions>
   const csvConfig = mkConfig({ useKeysAsHeaders: true });
   const csv = generateCsv(csvConfig)(data);
-  const filename = `${args[0]}-${data.length}d.csv`;
+  const filename = `${location}-${data.length}d.csv`;
   const csvBuffer = new Uint8Array(Buffer.from(asString(csv)));
 
   // Write the csv file to disk
@@ -63,10 +60,15 @@ function generateForecastCSV(data) {
 }
 
 async function main() {
-  const data = await fetchWeather(args[0]);
-  console.log(data);
-  if (data) {
-    generateForecastCSV(data);
+  const fetchPromises = args.map((arg) => fetchWeather(arg));
+  const fetchResults = await Promise.allSettled(fetchPromises);
+  for (const result of fetchResults) {
+    if (result.status == "fulfilled") {
+      const { csvData, location } = result.value;
+      generateForecastCSV(csvData, location);
+    } else if (result.status === "rejected") {
+      console.error(`Error: ${result.reason.message}`);
+    }
   }
 }
 
