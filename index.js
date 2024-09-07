@@ -47,18 +47,27 @@ async function fetchWeather(location) {
   }
 }
 
-const data = await fetchWeather(args[0]);
-console.log(data);
+function generateForecastCSV(data) {
+  // mkConfig merges your options with the defaults
+  // and returns WithDefaults<ConfigOptions>
+  const csvConfig = mkConfig({ useKeysAsHeaders: true });
+  const csv = generateCsv(csvConfig)(data);
+  const filename = `${args[0]}-${data.length}d.csv`;
+  const csvBuffer = new Uint8Array(Buffer.from(asString(csv)));
 
-// mkConfig merges your options with the defaults
-// and returns WithDefaults<ConfigOptions>
-const csvConfig = mkConfig({ useKeysAsHeaders: true });
-const csv = generateCsv(csvConfig)(data);
-const filename = `${args[0]}-${data.length}d.csv`;
-const csvBuffer = new Uint8Array(Buffer.from(asString(csv)));
+  // Write the csv file to disk
+  writeFile(filename, csvBuffer, (err) => {
+    if (err) throw err;
+    console.log("file saved: ", filename);
+  });
+}
 
-// Write the csv file to disk
-writeFile(filename, csvBuffer, (err) => {
-  if (err) throw err;
-  console.log("file saved: ", filename);
-});
+async function main() {
+  const data = await fetchWeather(args[0]);
+  console.log(data);
+  if (data) {
+    generateForecastCSV(data);
+  }
+}
+
+main();
