@@ -54,7 +54,7 @@ console.log(data);
 // and returns WithDefaults<ConfigOptions>
 const csvConfig = mkConfig({ useKeysAsHeaders: true });
 const csv = generateCsv(csvConfig)(data);
-const filename = `${csvConfig.filename}.csv`;
+const filename = `${args[0]}-${data.length}d.csv`;
 const csvBuffer = new Uint8Array(Buffer.from(asString(csv)));
 
 // Write the csv file to disk
